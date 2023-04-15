@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import axios from 'axios';
+import { useCookies } from 'react-cookie';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   return (
@@ -12,8 +15,29 @@ const Auth = () => {
 export default Auth;
 
 const Login = () => {
+  const [_, setCookies] = useCookies(['access_token']);
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  const navigate = useNavigate();
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+
+    try {
+      const result = await axios.post('http://localhost:3001/auth/login', {
+        username,
+        password,
+      });
+
+      setCookies('access_token', result.data.token);
+      window.localStorage.setItem('userID', result.data.userID);
+      navigate('/');
+    } catch (error) {
+      console.error(error);
+    }
+  };
   return (
     <Form
       username={username}
@@ -21,6 +45,7 @@ const Login = () => {
       password={password}
       setPassword={setPassword}
       label="Login"
+      onSubmit={onSubmit}
     />
   );
 };
@@ -28,6 +53,21 @@ const Login = () => {
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      await axios.post('http://localhost:3001/auth/register', {
+        username,
+        password,
+      });
+      alert('Registration completed! Now login');
+      setUsername('');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <Form
       username={username}
@@ -35,14 +75,22 @@ const Register = () => {
       password={password}
       setPassword={setPassword}
       label="Register"
+      onSubmit={onSubmit}
     />
   );
 };
 
-const Form = ({ username, setUsername, password, setPassword, label }) => {
+const Form = ({
+  username,
+  setUsername,
+  password,
+  setPassword,
+  label,
+  onSubmit,
+}) => {
   return (
     <div className="auth-container">
-      <form action="">
+      <form onSubmit={onSubmit}>
         <h2>{label}</h2>
         <div className="form-group">
           <label htmlFor="username">Username:</label>
